@@ -1,0 +1,79 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "./../node_modules/.prisma/client"
+}
+
+datasource db {
+  provider = "mongodb"
+  url      = env("DATABASE_URL")
+}
+
+model Pipeline {
+  id    String @id @default(auto()) @map("_id") @db.ObjectId
+  name  String
+  steps Step[]
+}
+
+model Step {
+  id         String    @id @default(auto()) @map("_id") @db.ObjectId
+  name       String
+  type       String
+  pipeline   Pipeline? @relation(fields: [pipelineId], references: [id])
+  pipelineId String?
+}
+
+model User {
+  id           String         @id @default(auto()) @map("_id") @db.ObjectId
+  user_name    String
+  password     String
+  email        String
+  first_name   String?
+  last_name    String?
+  gits         Git[]
+  RefreshToken RefreshToken[]
+  Project      Project[]
+}
+
+model Git {
+  id        String @id @default(auto()) @map("_id") @db.ObjectId
+  name      String
+  user_name String
+  token     String
+  platform  String
+  user_id   String
+  user      User   @relation(fields: [user_id], references: [id])
+
+  Project Project[]
+}
+
+model RefreshToken {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  token     String   @unique
+  user_id   String
+  user      User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@index([user_id])
+}
+
+model Project {
+  id             String @id @default(auto()) @map("_id") @db.ObjectId
+  project_name   String
+  description    String
+  git_url        String
+  user_id        String
+  total_project  Int
+  project_path   Json
+  repo_storage   String
+  git_account_id String
+
+  user User @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  git  Git  @relation(fields: [git_account_id], references: [id], onDelete: Cascade)
+}

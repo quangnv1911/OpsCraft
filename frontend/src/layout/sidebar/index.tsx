@@ -10,34 +10,42 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
-} from "@/components/ui/sidebar"
-import { Home, Workflow, FileText, Settings, Zap, Github, Cloud } from "lucide-react"
+} from '@/components/ui/sidebar'
+import {
+  Home,
+  Workflow,
+  FileText,
+  Settings,
+  Zap,
+  Github,
+  Cloud,
+} from 'lucide-react'
 
 const menuItems = [
   {
-    title: "Dashboard",
-    url: "/home",
+    title: 'Dashboard',
+    url: '/home',
     icon: Home,
   },
   {
-    title: "Pipeline Builder",
-    url: "/builder",
+    title: 'Pipeline Builder',
+    url: '/builder',
     icon: Workflow,
   },
   {
-    title: "Logs",
-    url: "/logs",
+    title: 'Logs',
+    url: '/logs',
     icon: FileText,
   },
   {
-    title: "Settings",
-    url: "/settings",
+    title: 'Settings',
+    url: '/settings',
     icon: Settings,
   },
 ]
 
 export function AppSidebar() {
-  const location  = useLocation()
+  const location = useLocation()
 
   return (
     <Sidebar>
@@ -57,9 +65,12 @@ export function AppSidebar() {
           <SidebarGroupLabel>Navigation</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
-              {menuItems.map((item) => (
+              {menuItems.map(item => (
                 <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton asChild isActive={location.pathname === item.url}>
+                  <SidebarMenuButton
+                    asChild
+                    isActive={location.pathname === item.url}
+                  >
                     <Link to={item.url}>
                       <item.icon />
                       <span>{item.title}</span>
@@ -91,7 +102,9 @@ export function AppSidebar() {
         </SidebarGroup>
       </SidebarContent>
       <SidebarFooter>
-        <div className="p-2 text-xs text-muted-foreground">v1.0.0 - Self-hosted</div>
+        <div className="p-2 text-xs text-muted-foreground">
+          v1.0.0 - Self-hosted
+        </div>
       </SidebarFooter>
     </Sidebar>
   )

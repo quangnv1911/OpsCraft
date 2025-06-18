@@ -1,10 +1,10 @@
-import type React from "react"
+import type React from 'react'
 
-import { Button } from "@/components/ui/button"
-import { SidebarTrigger } from "@/components/ui/sidebar"
-import { Link, useLocation } from "@tanstack/react-router"
-import authStore from "@/stores/authStore"
-import { UserDropdown } from "@/components/components/user-dropdown"
+import { Button } from '@/components/ui/button'
+import { SidebarTrigger } from '@/components/ui/sidebar'
+import { Link, useLocation } from '@tanstack/react-router'
+import authStore from '@/stores/authStore'
+import { UserDropdown } from '@/components/common/user-dropdown'
 
 interface HeaderProps {
   title: string
@@ -14,7 +14,7 @@ interface HeaderProps {
 export function Header({ title, children }: HeaderProps) {
   const { isAuthenticated } = authStore()
   const location = useLocation()
-  const isLoginPage = location.pathname === "/login"
+  const isLoginPage = location.pathname === '/login'
 
   if (isLoginPage) return null
 

@@ -1,0 +1,13 @@
+{
+    "watch": [
+        "src/**"
+    ],
+    "ignore": [
+        "cloned/**",
+        "./tmp/**",
+        "repos/**"
+    ],
+    "ext": "ts",
+    "exec": "node --loader ts-node/esm src/index.ts --trace-warnings",
+    "verbose": true
+}

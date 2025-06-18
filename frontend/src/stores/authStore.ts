@@ -1,53 +1,33 @@
-import { persist } from 'zustand/middleware';
-import { create } from 'zustand';
+import { persist } from 'zustand/middleware'
+import { create } from 'zustand'
 
 interface AuthState {
-  isAuthenticated: boolean;
-  accessToken: string | null;
-  refreshToken: string | null;
-  role: string | null;
-  userName: string | null;
-  email: string | null;
-  image: string;
+  isAuthenticated: boolean
+  accessToken: string | null
+  refreshToken: string | null
   setAuthData: (
+    isAuthenticated: boolean,
     accessToken: string | null,
     refreshToken: string | null,
-    role: string,
-    userName: string,
-    email: string,
-    image: string,
-    isAuthenticated: boolean,
-  ) => void;
-  clearTokens: () => void;
-  updateToken: (accessToken: string, refreshToken: string) => void;
+  ) => void
+  clearTokens: () => void
+  updateToken: (accessToken: string, refreshToken: string) => void
 }
 
 const authStore = create<AuthState>()(
   persist(
-    (set, get) => ({
+    (set) => ({
       isAuthenticated: false,
       accessToken: null,
       refreshToken: null,
-      role: null,
-      userName: null,
-      email: null,
-      image: '',
       setAuthData: (
-        accessToken: string | null,
-        refreshToken: string | null,
-        role: string,
-        userName: string,
-        email: string,
-        image: string,
         isAuthenticated: boolean,
+        accessToken: string | null,
+        refreshToken: string | null
       ): void =>
         set({
           accessToken,
           refreshToken,
-          role,
-          userName,
-          email,
-          image,
           isAuthenticated,
         }),
       clearTokens: (): void =>
@@ -55,12 +35,7 @@ const authStore = create<AuthState>()(
           isAuthenticated: false,
           accessToken: null,
           refreshToken: null,
-          role: null,
-          userName: null,
-          email: null,
-          image: '',
         }),
-      getRole: (): string | null => get().role,
       updateToken: (accessToken: string, refreshToken: string): void =>
         set({
           accessToken,
@@ -68,8 +43,8 @@ const authStore = create<AuthState>()(
         }),
     }),
     {
-      name: 'app-storage',
-    },
-  ),
-);
-export default authStore;
+      name: 'auth-storage',
+    }
+  )
+)
+export default authStore

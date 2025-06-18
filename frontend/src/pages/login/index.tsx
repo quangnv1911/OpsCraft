@@ -1,48 +1,69 @@
-import type React from "react"
+import type React from 'react'
 
-import { useState } from "react"
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Checkbox } from "@/components/ui/checkbox"
-import { Zap, Github, GitBranch } from "lucide-react"
-import { toast } from "react-toastify"
-import { Link, useRouter } from "@tanstack/react-router"
+import { ReactNode } from 'react'
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { Checkbox } from '@/components/ui/checkbox'
+import { Zap } from 'lucide-react'
+import { toast } from 'react-toastify'
+import { Link, useRouter } from '@tanstack/react-router'
+import { CredentialResponse, GoogleLogin } from '@react-oauth/google'
+import { zodResolver } from '@hookform/resolvers/zod'
+import { LoginFormData, loginSchema } from '@/schema/loginSchema'
+import { useForm } from 'react-hook-form'
+import { useMutation } from '@/hooks/useMutation/useMutation'
+import { LoginMutationResponse } from '@/api/actions/auth/auth.types'
+import authStore from '@/stores/authStore'
+import { StandardizedApiError } from '@/context/apiClient/apiClientContextController/apiError/apiError.types'
 
-export default function LoginPage() {
-  const [email, setEmail] = useState("")
-  const [password, setPassword] = useState("")
-  const [isLoading, setIsLoading] = useState(false)
+export const LoginPage = (): ReactNode => {
   const router = useRouter()
+  const {setAuthData} = authStore()
+  const {
+    register,
+    handleSubmit,
+    formState: { errors, isSubmitting },
+  } = useForm<LoginFormData>({
+    resolver: zodResolver(loginSchema),
+    defaultValues: {
+      email: '',
+      password: '',
+      isRememberMe: false,
+    },
+  })
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setIsLoading(true)
+  const { mutateAsync: loginMutate, isPending: isAuthenticating } = useMutation('loginMutation', {
+    onSuccess: (res: LoginMutationResponse) => {
+      console.log(res);
 
+
+      toast.success('Đăng nhập thành công');
+      setAuthData(res.isAuthenticated,res.accessToken,res.refreshToken);
+    },
+    onError: (error: StandardizedApiError) => {
+      toast.error(error.message);
+    },
+  });
+  const onSubmit = async (data: LoginFormData) => {
+    loginMutate(data)
+  }
+
+  const handleGoogleLogin = async (credentialResponse: CredentialResponse) => {
     try {
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 1000))
-
-      // Mock login - in a real app, this would validate with a backend
-      if (email && password) {
-        // login({
-        //   id: "1",
-        //   name: "Demo User",
-        //   email,
-        //   avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${email}`,
-        // })
-
-        toast.success("Welcome to PipelineFlow!")
-
-        router.navigate({ to: "/home" })
-      } else {
-        toast.error("Please check your credentials and try again.")
-      }
+      console.log('Google login:', credentialResponse)
+      toast.success('Google login successful!')
+      router.navigate({ to: '/home' })
     } catch (error) {
-      toast("An error occurred during login.")
-    } finally {
-      setIsLoading(false)
+      toast.error('Google login failed')
     }
   }
 
@@ -62,9 +83,11 @@ export default function LoginPage() {
         <Card>
           <CardHeader>
             <CardTitle>Sign In</CardTitle>
-            <CardDescription>Enter your credentials to access your account</CardDescription>
+            <CardDescription>
+              Enter your credentials to access your account
+            </CardDescription>
           </CardHeader>
-          <form onSubmit={handleSubmit}>
+          <form onSubmit={handleSubmit(onSubmit)}>
             <CardContent className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="email">Email</Label>
@@ -72,10 +95,12 @@ export default function LoginPage() {
                   id="email"
                   type="email"
                   placeholder="name@example.com"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  required
+                  {...register('email')}
+                  className={errors.email ? 'border-red-500' : ''}
                 />
+                {errors.email && (
+                  <p className="text-sm text-red-500">{errors.email.message}</p>
+                )}
               </div>
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
@@ -87,42 +112,59 @@ export default function LoginPage() {
                 <Input
                   id="password"
                   type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  required
+                  placeholder="Enter your password"
+                  {...register('password')}
+                  className={errors.password ? 'border-red-500' : ''}
                 />
+                {errors.password && (
+                  <p className="text-sm text-red-500">
+                    {errors.password.message}
+                  </p>
+                )}
               </div>
               <div className="flex items-center space-x-2">
-                <Checkbox id="remember" />
+                <Checkbox 
+                  id="remember" 
+                  {...register('isRememberMe')}
+                />
                 <Label htmlFor="remember" className="text-sm">
                   Remember me
                 </Label>
               </div>
             </CardContent>
             <CardFooter className="flex flex-col space-y-4">
-              <Button type="submit" className="w-full" disabled={isLoading}>
-                {isLoading ? "Signing in..." : "Sign In"}
+              <Button
+                type="submit"
+                className="w-full"
+                disabled={isSubmitting}
+              >
+                {(isSubmitting ||isAuthenticating) ? 'Signing in...' : 'Sign In'}
               </Button>
               <div className="relative w-full">
                 <div className="absolute inset-0 flex items-center">
                   <span className="w-full border-t" />
                 </div>
                 <div className="relative flex justify-center text-xs uppercase">
-                  <span className="bg-card px-2 text-muted-foreground">Or continue with</span>
+                  <span className="bg-card px-2 text-muted-foreground">
+                    Or continue with
+                  </span>
                 </div>
               </div>
-              <div className="grid grid-cols-2 gap-4">
-                <Button variant="outline" type="button" className="gap-2">
-                  <Github className="h-4 w-4" />
-                  GitHub
-                </Button>
-                <Button variant="outline" type="button" className="gap-2">
-                  <GitBranch className="h-4 w-4" />
-                  GitLab
-                </Button>
+              <div className="grid grid-cols-1 gap-4">
+                <GoogleLogin
+                  width="100%"
+                  theme="outline"
+                  shape="pill"
+                  logo_alignment="center"
+                  size="large"
+                  onSuccess={handleGoogleLogin}
+                  onError={() => {
+                    toast.error('Invalid google account')
+                  }}
+                />
               </div>
               <p className="text-center text-sm text-muted-foreground">
-                Don&apos;t have an account?{" "}
+                Don&apos;t have an account?{' '}
                 <Link to="#" className="text-primary hover:underline">
                   Sign up
                 </Link>
