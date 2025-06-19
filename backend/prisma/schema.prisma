@@ -38,16 +38,21 @@ model User {
   gits         Git[]
   RefreshToken RefreshToken[]
   Project      Project[]
+  Docker       Docker[]
+  Discord      Discord[]
+  Jenkins      Jenkins[]
 }
 
 model Git {
-  id        String @id @default(auto()) @map("_id") @db.ObjectId
-  name      String
-  user_name String
-  token     String
-  platform  String
-  user_id   String
-  user      User   @relation(fields: [user_id], references: [id])
+  id           String  @id @default(auto()) @map("_id") @db.ObjectId
+  name         String
+  user_name    String
+  token        String
+  platform     String
+  is_default   Boolean @default(false)
+  is_connected Boolean @default(false)
+  user_id      String
+  user         User    @relation(fields: [user_id], references: [id])
 
   Project Project[]
 }
@@ -76,4 +81,40 @@ model Project {
 
   user User @relation(fields: [user_id], references: [id], onDelete: Cascade)
   git  Git  @relation(fields: [git_account_id], references: [id], onDelete: Cascade)
+}
+
+model Docker {
+  id           String  @id @default(auto()) @map("_id") @db.ObjectId
+  name         String
+  user_name    String
+  password     String
+  is_default   Boolean @default(false)
+  is_connected Boolean @default(false)
+
+  user_id String
+  user    User   @relation(fields: [user_id], references: [id])
+}
+
+model Discord {
+  id           String  @id @default(auto()) @map("_id") @db.ObjectId
+  name         String
+  webhook_url  String
+  channel_name String
+  is_default   Boolean @default(false)
+
+  user_id String
+  user    User   @relation(fields: [user_id], references: [id])
+}
+
+model Jenkins {
+  id           String  @id @default(auto()) @map("_id") @db.ObjectId
+  name         String
+  jenkins_url  String
+  user_name    String
+  api_token    String
+  is_default   Boolean @default(false)
+  is_connected Boolean @default(false)
+
+  user_id String
+  user    User   @relation(fields: [user_id], references: [id])
 }

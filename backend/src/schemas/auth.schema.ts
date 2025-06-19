@@ -26,6 +26,10 @@ export const LogoutSchema = z.object({
     refreshToken: z.string().optional(),
 });
 
+export const LoginGoogleSchema = z.object({
+    code: z.string().min(1, 'Google oauth code is required'),
+});
+
 export type LoginInput = z.infer<typeof LoginSchema>;
 export type RefreshTokenInput = z.infer<typeof RefreshTokenSchema>;
 export type LogoutInput = z.infer<typeof LogoutSchema>;

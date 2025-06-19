@@ -43,8 +43,9 @@ import {
 import { Separator } from '@/components/ui/separator'
 import { toast } from 'react-toastify'
 import { Header } from '@/layout/header'
+import { PipelineSettings } from '@/components/features/pipline/pipeline-settings'
 
-interface Project {
+export interface Project {
   id: string
   name: string
   type: 'frontend' | 'backend' | 'mobile' | 'shared' | 'api' | 'docs'
@@ -54,7 +55,7 @@ interface Project {
   detected: boolean
 }
 
-interface PipelineStep {
+export interface PipelineStep {
   id: string
   type: 'build' | 'test' | 'deploy' | 'cloud' | 'secrets' | 'custom'
   name: string
@@ -67,7 +68,7 @@ interface PipelineStep {
   }
 }
 
-interface PipelineSettings {
+export interface PipelineSettingsType {
   name: string
   engine: 'github' | 'jenkins' | 'gitlab' | ''
   targetRepo: string
@@ -121,59 +122,16 @@ const stepTypes = [
   },
 ]
 
-const engines = [
-  { value: 'github', label: 'GitHub Actions', icon: Github },
-  { value: 'jenkins', label: 'Jenkins', icon: Settings },
-  { value: 'gitlab', label: 'GitLab CI', icon: GitBranch },
-]
-
 const cloudProviders = [
   { value: 'aws', label: 'Amazon Web Services (AWS)' },
   { value: 'gcp', label: 'Google Cloud Platform (GCP)' },
   { value: 'azure', label: 'Microsoft Azure' },
 ]
 
-const mockDetectedProjects: Project[] = [
-  {
-    id: 'frontend',
-    name: 'Frontend App',
-    type: 'frontend',
-    path: 'apps/frontend',
-    framework: 'Next.js',
-    packageManager: 'npm',
-    detected: true,
-  },
-  {
-    id: 'backend',
-    name: 'Backend API',
-    type: 'backend',
-    path: 'apps/backend',
-    framework: 'Node.js',
-    packageManager: 'npm',
-    detected: true,
-  },
-  {
-    id: 'mobile',
-    name: 'Mobile App',
-    type: 'mobile',
-    path: 'apps/mobile',
-    framework: 'React Native',
-    packageManager: 'yarn',
-    detected: true,
-  },
-  {
-    id: 'shared',
-    name: 'Shared Library',
-    type: 'shared',
-    path: 'packages/shared',
-    framework: 'TypeScript',
-    packageManager: 'npm',
-    detected: true,
-  },
-]
+
 
 export default function BuilderPage() {
-  const [pipelineSettings, setPipelineSettings] = useState<PipelineSettings>({
+  const [pipelineSettings, setPipelineSettings] = useState<PipelineSettingsType>({
     name: '',
     engine: '',
     targetRepo: '',
@@ -187,7 +145,6 @@ export default function BuilderPage() {
   const [generatedCode, setGeneratedCode] = useState('')
 
   const [projects, setProjects] = useState<Project[]>([])
-  const [detectedProjects, setDetectedProjects] = useState<Project[]>([])
   const [matrixBuild, setMatrixBuild] = useState(false)
   const [conditionalSteps, setConditionalSteps] = useState(true)
 
@@ -1253,18 +1210,6 @@ ${steps
     )
   }
 
-  const detectProjects = useCallback(() => {
-    // Simulate project detection
-    setDetectedProjects(mockDetectedProjects)
-    setProjects(mockDetectedProjects)
-
-    toast.success(`Found ${mockDetectedProjects.length} projects in repository`)
-  }, [toast])
-
-  useEffect(() => {
-    detectProjects()
-  }, [detectProjects])
-
   return (
     <div className="flex flex-col h-screen">
       {/* Header */}
@@ -1287,186 +1232,7 @@ ${steps
           {/* Left Panel */}
           <div className="col-span-3 border-r bg-muted/30 flex flex-col">
             {/* Pipeline Settings */}
-            <div className="p-4 border-b max-h-[50vh] overflow-auto">
-              <Card>
-                <CardHeader className="pb-3">
-                  <CardTitle className="text-sm">Pipeline Settings</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div>
-                    <Label htmlFor="pipeline-name">Pipeline Name</Label>
-                    <Input
-                      id="pipeline-name"
-                      placeholder="My Awesome Pipeline"
-                      value={pipelineSettings.name}
-                      onChange={e =>
-                        setPipelineSettings(prev => ({
-                          ...prev,
-                          name: e.target.value,
-                        }))
-                      }
-                    />
-                  </div>
-
-                  <div>
-                    <Label htmlFor="engine">CI/CD Engine</Label>
-                    <Select
-                      value={pipelineSettings.engine}
-                      onValueChange={(value: any) =>
-                        setPipelineSettings(prev => ({
-                          ...prev,
-                          engine: value,
-                        }))
-                      }
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select engine" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {engines.map(engine => (
-                          <SelectItem key={engine.value} value={engine.value}>
-                            <div className="flex items-center gap-2">
-                              <engine.icon className="h-4 w-4" />
-                              {engine.label}
-                            </div>
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  <div>
-                    <Label htmlFor="target-repo">Target Repository</Label>
-                    <Input
-                      id="target-repo"
-                      placeholder="username/repository"
-                      value={pipelineSettings.targetRepo}
-                      onChange={e =>
-                        setPipelineSettings(prev => ({
-                          ...prev,
-                          targetRepo: e.target.value,
-                        }))
-                      }
-                    />
-                  </div>
-
-                  <div>
-                    <Label htmlFor="branch">Branch</Label>
-                    <Input
-                      id="branch"
-                      placeholder="main"
-                      value={pipelineSettings.branch}
-                      onChange={e =>
-                        setPipelineSettings(prev => ({
-                          ...prev,
-                          branch: e.target.value,
-                        }))
-                      }
-                    />
-                  </div>
-
-                  <div>
-                    <Label>Detected Projects</Label>
-                    <div className="space-y-2 mt-2">
-                      {projects.map(project => (
-                        <div
-                          key={project.id}
-                          className="flex items-center justify-between p-2 border rounded"
-                        >
-                          <div className="flex items-center gap-2">
-                            <div
-                              className={`w-2 h-2 rounded-full ${
-                                project.type === 'frontend'
-                                  ? 'bg-blue-500'
-                                  : project.type === 'backend'
-                                    ? 'bg-green-500'
-                                    : project.type === 'mobile'
-                                      ? 'bg-purple-500'
-                                      : 'bg-gray-500'
-                              }`}
-                            />
-                            <div>
-                              <div className="text-sm font-medium">
-                                {project.name}
-                              </div>
-                              <div className="text-xs text-muted-foreground">
-                                {project.path} • {project.framework}
-                              </div>
-                            </div>
-                          </div>
-                          <Badge variant="secondary" className="text-xs">
-                            {project.packageManager}
-                          </Badge>
-                        </div>
-                      ))}
-                    </div>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="w-full mt-2"
-                      onClick={detectProjects}
-                    >
-                      <Search className="h-3 w-3 mr-1" />
-                      Re-detect Projects
-                    </Button>
-                  </div>
-
-                  <Separator />
-
-                  <div className="space-y-2">
-                    <div className="flex items-center space-x-2">
-                      <Checkbox
-                        id="matrix-build"
-                        checked={matrixBuild}
-                        onCheckedChange={checked => setMatrixBuild(!!checked)}
-                      />
-                      <Label htmlFor="matrix-build">Enable Matrix Build</Label>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <Checkbox
-                        id="conditional-steps"
-                        checked={conditionalSteps}
-                        onCheckedChange={checked =>
-                          setConditionalSteps(!!checked)
-                        }
-                      />
-                      <Label htmlFor="conditional-steps">
-                        Conditional Steps (Only Changed)
-                      </Label>
-                    </div>
-                  </div>
-
-                  <div className="space-y-2">
-                    <div className="flex items-center space-x-2">
-                      <Checkbox
-                        id="run-on-push"
-                        checked={pipelineSettings.runOnPush}
-                        onCheckedChange={checked =>
-                          setPipelineSettings(prev => ({
-                            ...prev,
-                            runOnPush: !!checked,
-                          }))
-                        }
-                      />
-                      <Label htmlFor="run-on-push">Run on Push</Label>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <Checkbox
-                        id="run-on-pr"
-                        checked={pipelineSettings.runOnPR}
-                        onCheckedChange={checked =>
-                          setPipelineSettings(prev => ({
-                            ...prev,
-                            runOnPR: !!checked,
-                          }))
-                        }
-                      />
-                      <Label htmlFor="run-on-pr">Run on Pull Request</Label>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
+            <PipelineSettings />
 
             {/* Available Steps */}
             <div className="flex-1 p-4 overflow-auto min-h-0 max-h-[40vh]">

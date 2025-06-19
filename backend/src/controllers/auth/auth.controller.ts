@@ -51,26 +51,10 @@ export class AuthController {
         return sendSuccess(res, userData);
     };
 
-    handleGoogleCallback = async (req: Request, res: Response) => {
-        const token = await this.jwtService.generateTokens(req.user as User);
-        res.redirect(
-            `${getEnvConfig().FRONTEND_URL ?? 'http://localhost:3000'}/auth/success?token=${token}`
-        );
-    };
-
-    handleAuthFailure = (req: Request, res: Response) => {
-        throw new AuthenticationError('Invalid credentials');
-    };
-
     loginGoogle = async (req: Request, res: Response) => {
-        const { email } = req.body;
-        const user: User | null = await prisma.user.findFirst({ where: { email } });
-        if (!user) {
-            throw new AuthenticationError('Invalid credentials');
-        }
-
-        const token = await this.jwtService.generateTokens(user, false);
-        return sendSuccess(res, token);
+        const { code } = req.body;
+        const tokenResponse = await this.authService.loginGoogle(code);
+        return sendSuccess(res, tokenResponse);
     };
     register = async (req: Request, res: Response) => {
         const { email, password, user_name } = req.body;

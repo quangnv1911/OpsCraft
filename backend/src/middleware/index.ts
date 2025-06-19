@@ -12,6 +12,7 @@ import { logger } from '../utils/helpers/logger.js';
 import { ERROR_TYPES } from './error/error.middleware.type.js';
 import archiver from 'archiver';
 import fs from 'fs';
+import { unwrapBody } from './unwrap-body/unwrap-body.middleware.ts.js';
 
 /**
  * Register all middleware
@@ -88,6 +89,9 @@ export const registerGlobalMiddleware = (app: Application): void => {
 
     // Middleware context (để lưu userId từ JWT v.v.)
     app.use(contextMiddleware);
+
+    // Middleware unwrap body
+    app.use(unwrapBody);
 };
 
 /**

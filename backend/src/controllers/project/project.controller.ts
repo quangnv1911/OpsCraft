@@ -14,8 +14,6 @@ export class ProjectController {
         if (!gitUrl || !gitUrl.startsWith('https://')) {
             return sendError(res, 'Invalid Git URL');
         }
-        console.log('1')
-        console.log(projectName)
         const result: AnalyzeProjectResult = await gitService.analyzeGitRepo(
             gitUrl,
             gitAccountId,

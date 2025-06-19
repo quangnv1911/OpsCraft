@@ -7,7 +7,10 @@ export type LoginMutationArguments = {
 export type LoginMutationResponse = {
   accessToken: string
   refreshToken: string
-  isAuthenticated: boolean
+}
+
+export type LoginGoogleMutationArguments = {
+  code: string
 }
 
 export type GetMeQueryResponse = {

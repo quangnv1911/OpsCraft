@@ -16,7 +16,6 @@ import { Checkbox } from '@/components/ui/checkbox'
 import { Zap } from 'lucide-react'
 import { toast } from 'react-toastify'
 import { Link, useRouter } from '@tanstack/react-router'
-import { CredentialResponse, GoogleLogin } from '@react-oauth/google'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { LoginFormData, loginSchema } from '@/schema/loginSchema'
 import { useForm } from 'react-hook-form'
@@ -24,10 +23,13 @@ import { useMutation } from '@/hooks/useMutation/useMutation'
 import { LoginMutationResponse } from '@/api/actions/auth/auth.types'
 import authStore from '@/stores/authStore'
 import { StandardizedApiError } from '@/context/apiClient/apiClientContextController/apiError/apiError.types'
+import { LoginGoogle } from '@/components/features/login/login-google'
+import { useGlobalLoading } from '@/hooks/useGlobalLoading'
 
 export const LoginPage = (): ReactNode => {
   const router = useRouter()
-  const {setAuthData} = authStore()
+  const { setAuthData } = authStore()
+  const { showLoading, hideLoading } = useGlobalLoading()
   const {
     register,
     handleSubmit,
@@ -41,30 +43,24 @@ export const LoginPage = (): ReactNode => {
     },
   })
 
-  const { mutateAsync: loginMutate, isPending: isAuthenticating } = useMutation('loginMutation', {
-    onSuccess: (res: LoginMutationResponse) => {
-      console.log(res);
-
-
-      toast.success('Đăng nhập thành công');
-      setAuthData(res.isAuthenticated,res.accessToken,res.refreshToken);
-    },
-    onError: (error: StandardizedApiError) => {
-      toast.error(error.message);
-    },
-  });
-  const onSubmit = async (data: LoginFormData) => {
-    loginMutate(data)
-  }
-
-  const handleGoogleLogin = async (credentialResponse: CredentialResponse) => {
-    try {
-      console.log('Google login:', credentialResponse)
-      toast.success('Google login successful!')
-      router.navigate({ to: '/home' })
-    } catch (error) {
-      toast.error('Google login failed')
+  const { mutateAsync: loginMutate, isPending: isAuthenticating } = useMutation(
+    'loginMutation',
+    {
+      onSuccess: (res: LoginMutationResponse) => {
+        toast.success('Login successful')
+        setAuthData(true, res.accessToken, res.refreshToken)
+        hideLoading()
+        router.navigate({ to: '/home' })
+      },
+      onError: (error: StandardizedApiError) => {
+        hideLoading()
+        toast.error(error.message)
+      },
     }
+  )
+  const onSubmit = async (data: LoginFormData) => {
+    showLoading()
+    await loginMutate(data)
   }
 
   return (
@@ -123,22 +119,15 @@ export const LoginPage = (): ReactNode => {
                 )}
               </div>
               <div className="flex items-center space-x-2">
-                <Checkbox 
-                  id="remember" 
-                  {...register('isRememberMe')}
-                />
+                <Checkbox id="remember" {...register('isRememberMe')} />
                 <Label htmlFor="remember" className="text-sm">
                   Remember me
                 </Label>
               </div>
             </CardContent>
             <CardFooter className="flex flex-col space-y-4">
-              <Button
-                type="submit"
-                className="w-full"
-                disabled={isSubmitting}
-              >
-                {(isSubmitting ||isAuthenticating) ? 'Signing in...' : 'Sign In'}
+              <Button type="submit" className="w-full" disabled={isSubmitting}>
+                {isSubmitting || isAuthenticating ? 'Signing in...' : 'Sign In'}
               </Button>
               <div className="relative w-full">
                 <div className="absolute inset-0 flex items-center">
@@ -151,17 +140,7 @@ export const LoginPage = (): ReactNode => {
                 </div>
               </div>
               <div className="grid grid-cols-1 gap-4">
-                <GoogleLogin
-                  width="100%"
-                  theme="outline"
-                  shape="pill"
-                  logo_alignment="center"
-                  size="large"
-                  onSuccess={handleGoogleLogin}
-                  onError={() => {
-                    toast.error('Invalid google account')
-                  }}
-                />
+                <LoginGoogle />
               </div>
               <p className="text-center text-sm text-muted-foreground">
                 Don&apos;t have an account?{' '}

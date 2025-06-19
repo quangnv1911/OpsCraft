@@ -16,6 +16,7 @@ import { UserDto } from '../user/user.service.type.js';
 import _ from 'lodash';
 import { JwtService } from '../jwt/jwt.service.js';
 import { JwtResponse } from '../jwt/jwt.service.type.js';
+import { OAuth2Client } from 'google-auth-library';
 
 const users: OAuthUser[] = [];
 
@@ -25,11 +26,11 @@ export class AuthService {
         private readonly jwtService: JwtService
     ) {}
 
-    async handleLoginManual(
+    handleLoginManual = async (
         email: string,
         password: string,
         isRememberMe: boolean
-    ): Promise<JwtResponse> {
+    ): Promise<JwtResponse> => {
         const user = await this.userService.getUserByEmail(email);
         if (!user) {
             throw new ValidationError('User not found', [
@@ -44,59 +45,10 @@ export class AuthService {
         }
 
         return await this.jwtService.generateTokens(user, isRememberMe);
-    }
+    };
 
     public async comparePassword(password: string, hashedPassword: string): Promise<boolean> {
         return await bcrypt.compare(password, hashedPassword);
-    }
-
-    private initializeGoogleStrategy(): boolean {
-        try {
-            passport.use(
-                new GoogleStrategy(
-                    {
-                        clientID: getEnvConfig().GOOGLE_CLIENT_ID!,
-                        clientSecret: getEnvConfig().GOOGLE_CLIENT_SECRET!,
-                        callbackURL: '/api/auth/google/callback',
-                    },
-                    async (_accessToken, _refreshToken, profile: Profile, done) => {
-                        try {
-                            let user = users.find((u) => u.googleId === profile.id);
-                            if (user) return done(null, user);
-
-                            const newUser: OAuthUser = {
-                                id: users.length + 1,
-                                googleId: profile.id,
-                                email: profile.emails?.[0].value || '',
-                                name: profile.displayName,
-                                avatar: profile.photos?.[0].value || '',
-                                createdAt: new Date(),
-                            };
-
-                            users.push(newUser);
-                            return done(null, newUser);
-                        } catch (err) {
-                            return done(err as Error, undefined);
-                        }
-                    }
-                )
-            );
-
-            passport.serializeUser((user: any, done) => done(null, user.id));
-            passport.deserializeUser((id: number, done) => {
-                const user = users.find((u) => u.id === id);
-                done(null, user || null);
-            });
-
-            logger.info('✅ Google OAuth strategy initialized');
-            return true;
-        } catch (error) {
-            logger.error(
-                '❌ Failed to initialize Google OAuth strategy:',
-                (error as Error).message
-            );
-            return false;
-        }
     }
 
     public generateToken(user: { id: number; email: string; name: string }): string {
@@ -134,4 +86,31 @@ export class AuthService {
     public getAllUsers(): Omit<OAuthUser, 'googleId'>[] {
         return users.map(({ googleId, ...rest }) => rest);
     }
+
+    loginGoogle = async (code: string) => {
+        const client = new OAuth2Client({
+            clientId: getEnvConfig().GOOGLE_CLIENT_ID,
+            clientSecret: getEnvConfig().GOOGLE_CLIENT_SECRET,
+            redirectUri: getEnvConfig().FRONTEND_URL,
+        });
+        const { tokens } = await client.getToken(code);
+        const ticket = await client
+            .verifyIdToken({
+                idToken: tokens.id_token!,
+                audience: getEnvConfig().GOOGLE_CLIENT_ID,
+            })
+            .catch((error) => {
+                throw new AuthenticationError('Invalid credentials', [
+                    { field: 'email', message: 'User not found' },
+                ]);
+            });
+        const payload = ticket.getPayload();
+        const user = await this.userService.getUserByEmail(payload?.email!);
+        if (!user) {
+            throw new AuthenticationError('Invalid credentials', [
+                { field: 'email', message: 'Email account not valid' },
+            ]);
+        }
+        return await this.jwtService.generateTokens(user, false);
+    };
 }
